@@ -1,31 +1,99 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Head from "next/head";
 
 const STEPS = [
-  { id: "nom",      emoji: "", label: "Ton nom complet",            placeholder: "Ex: André Kim GBAGUIDI",                 color: "#8b5cf6" },
-  { id: "work",     emoji: "📋", label: "Travail du jour",            placeholder: "Sur quoi as-tu travaillé aujourd'hui ?", color: "#6366f1" },
-  { id: "good",     emoji: "✅", label: "Ce qui s'est bien passé",    placeholder: "Qu'est-ce qui s'est bien passé ?",        color: "#10b981" },
-  { id: "bad",      emoji: "❌", label: "Ce qui s'est mal passé",     placeholder: "Qu'est-ce qui n'a pas bien marché ?",     color: "#ef4444" },
-  { id: "learned",  emoji: "💡", label: "Ce que j'ai appris",         placeholder: "Qu'as-tu appris aujourd'hui ?",           color: "#f59e0b" },
-  { id: "tomorrow", emoji: "🎯", label: "Objectifs de demain",        placeholder: "Quels sont tes objectifs pour demain ?",  color: "#3b82f6" },
+  {
+    id: "nom",
+    label: "Votre nom complet",
+    placeholder: "Rechercher ou entrer votre nom...",
+    type: "search",
+    color: "#6B1A2A",
+  },
+  {
+    id: "built",
+    label: "Qu'avez-vous construit aujourd'hui ?",
+    placeholder: "Décrivez ce que vous avez construit...",
+    type: "textarea",
+    color: "#6B1A2A",
+  },
+  {
+    id: "working",
+    label: "Quelles sont les fonctionnalités qui marchent ?",
+    placeholder: "Listez les fonctionnalités qui fonctionnent...",
+    type: "textarea",
+    color: "#6B1A2A",
+    sub: {
+      id: "validated",
+      label: "Apprentissages validés",
+      placeholder: "Qu'avez-vous validé comme apprentissage ?",
+    },
+  },
+  {
+    id: "notWorking",
+    label: "Quelles sont les fonctionnalités qui ne marchent pas ?",
+    placeholder: "Listez les fonctionnalités bloquées...",
+    type: "textarea",
+    color: "#6B1A2A",
+    sub: {
+      id: "toLearn",
+      label: "Que devez-vous apprendre pour avancer ?",
+      placeholder: "Identifiez les apprentissages nécessaires...",
+    },
+  },
+  {
+    id: "learned",
+    label: "Qu'avez-vous appris ?",
+    placeholder: "Partagez vos apprentissages du jour...",
+    type: "textarea",
+    color: "#6B1A2A",
+  },
+  {
+    id: "tomorrow",
+    label: "Qu'allez-vous construire demain ?",
+    placeholder: "Décrivez vos objectifs pour demain...",
+    type: "textarea",
+    color: "#6B1A2A",
+  },
 ];
 
 export default function Home() {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [current, setCurrent] = useState("");
+  const [subCurrent, setSubCurrent] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef(null);
 
   const currentStep = STEPS[step];
-  const progress = (step / STEPS.length) * 100;
+  const totalSteps = STEPS.length;
+  const progress = ((step) / totalSteps) * 100;
+
+  useEffect(() => {
+    if (inputRef.current) inputRef.current.focus();
+    setCurrent(answers[currentStep.id] || "");
+    setSubCurrent(currentStep.sub ? (answers[currentStep.sub.id] || "") : "");
+  }, [step]);
+
+  async function searchNames(query) {
+    if (!query || query.length < 2) { setSuggestions([]); return; }
+    try {
+      const res = await fetch(`/api/names?q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setSuggestions(data.names || []);
+      setShowSuggestions(true);
+    } catch { setSuggestions([]); }
+  }
 
   function handleNext() {
     if (!current.trim()) return;
     const updated = { ...answers, [currentStep.id]: current.trim() };
+    if (currentStep.sub) updated[currentStep.sub.id] = subCurrent.trim();
     setAnswers(updated);
-    setCurrent("");
+    setSubCurrent("");
     if (step < STEPS.length - 1) {
       setStep(step + 1);
     } else {
@@ -33,36 +101,54 @@ export default function Home() {
     }
   }
 
-  async function handleSubmit(finalAnswers) {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(finalAnswers),
-      });
-      const data = await res.json();
-      if (data.success) setSubmitted(true);
-      else setError(data.error || "Une erreur est survenue.");
-    } catch (e) {
-      setError("Impossible de soumettre le formulaire.");
+  function handleBack() {
+    if (step > 0) {
+      setStep(step - 1);
     }
-    setLoading(false);
   }
 
+async function handleSubmit(finalAnswers) {
+  setLoading(true);
+  setError("");
+  try {
+    const res = await fetch("/api/submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nom: finalAnswers.nom,
+        built: finalAnswers.built,
+        working: finalAnswers.working,
+        validated: finalAnswers.validated || "",
+        notWorking: finalAnswers.notWorking,
+        toLearn: finalAnswers.toLearn || "",
+        learned: finalAnswers.learned,
+        tomorrow: finalAnswers.tomorrow,
+      }),
+    });
+    const data = await res.json();
+    if (data.success) setSubmitted(true);
+    else setError(data.error || "Une erreur est survenue.");
+  } catch (e) {
+    setError("Impossible de soumettre le formulaire.");
+  }
+  setLoading(false);
+}
+
   function handleKeyDown(e) {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleNext(); }
+    if (e.key === "Enter" && !e.shiftKey && currentStep.type !== "textarea") {
+      e.preventDefault();
+      handleNext();
+    }
   }
 
   if (submitted) return (
     <>
-      <Head><title>Rapport envoyé ✅</title></Head>
+      <Head><title>Rapport envoyé</title></Head>
       <div style={styles.container}>
-        <div style={styles.card}>
-          <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
-          <h1 style={{ ...styles.title, fontSize: 26 }}>Rapport envoyé !</h1>
-          <p style={styles.subtitle}>Ton rapport journalier a bien été enregistré. À demain !</p>
+        <div style={styles.successCard}>
+          <div style={styles.successIcon}>✓</div>
+          <h2 style={styles.successTitle}>Rapport envoyé</h2>
+          <p style={styles.successText}>Votre rapport journalier a bien été enregistré.</p>
         </div>
       </div>
     </>
@@ -72,56 +158,103 @@ export default function Home() {
     <>
       <Head>
         <title>Rapport Journalier</title>
-        <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
       </Head>
       <div style={styles.container}>
         <div style={styles.card}>
-          <div style={styles.header}>
-            <span style={styles.badge}>Rapport du {new Date().toLocaleDateString("fr-FR")}</span>
-            <h1 style={styles.title}>Rapport Journalier</h1>
-          </div>
 
-          <div style={styles.progressBar}>
-            <div style={{ ...styles.progressFill, width: `${progress}%`, background: currentStep.color }} />
-          </div>
-          <p style={styles.progressText}>{step + 1} / {STEPS.length}</p>
-
-          <div style={styles.stepContainer}>
-            <div style={{ ...styles.stepEmoji, background: currentStep.color + "20", border: `2px solid ${currentStep.color}40` }}>
-              {currentStep.emoji}
+          {/* Progress */}
+          <div style={styles.progressWrap}>
+            <div style={styles.progressTrack}>
+              <div style={{ ...styles.progressFill, width: `${progress}%` }} />
             </div>
-            <h2 style={{ ...styles.stepLabel, color: currentStep.color }}>{currentStep.label}</h2>
+            <span style={styles.progressLabel}>{step + 1} / {totalSteps}</span>
+          </div>
+
+          {/* Question */}
+          <div style={styles.questionWrap}>
+            <p style={styles.stepNum}>Question {step + 1}</p>
+            <h2 style={styles.question}>{currentStep.label}</h2>
+          </div>
+
+          {/* Input */}
+          {currentStep.id === "nom" ? (
+            <div style={{ position: "relative" }}>
+              <input
+                ref={inputRef}
+                type="text"
+                value={current}
+                onChange={e => { setCurrent(e.target.value); searchNames(e.target.value); }}
+                onKeyDown={handleKeyDown}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                placeholder={currentStep.placeholder}
+                style={styles.input}
+              />
+              {showSuggestions && suggestions.length > 0 && (
+                <div style={styles.suggestions}>
+                  {suggestions.map(name => (
+                    <div
+                      key={name}
+                      style={styles.suggestion}
+                      onMouseDown={() => { setCurrent(name); setShowSuggestions(false); }}
+                    >
+                      {name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
             <textarea
-              autoFocus
+              ref={inputRef}
               value={current}
               onChange={e => setCurrent(e.target.value)}
-              onKeyDown={handleKeyDown}
               placeholder={currentStep.placeholder}
               style={styles.textarea}
-              rows={currentStep.id === "nom" ? 1 : 4}
+              rows={4}
             />
-            {error && <p style={styles.error}>{error}</p>}
+          )}
+
+          {/* Sub question */}
+          {currentStep.sub && (
+            <div style={styles.subWrap}>
+              <p style={styles.subLabel}>{currentStep.sub.label}</p>
+              <textarea
+                value={subCurrent}
+                onChange={e => setSubCurrent(e.target.value)}
+                placeholder={currentStep.sub.placeholder}
+                style={{ ...styles.textarea, marginTop: 0 }}
+                rows={3}
+              />
+            </div>
+          )}
+
+          {error && <p style={styles.error}>{error}</p>}
+
+          {/* Actions */}
+          <div style={styles.actions}>
+            {step > 0 && (
+              <button onClick={handleBack} style={styles.backBtn}>
+                ← Retour
+              </button>
+            )}
             <button
               onClick={handleNext}
               disabled={!current.trim() || loading}
-              style={{ ...styles.button, background: current.trim() ? currentStep.color : "#d1d5db", cursor: current.trim() ? "pointer" : "not-allowed" }}
+              style={{
+                ...styles.nextBtn,
+                opacity: current.trim() ? 1 : 0.4,
+                cursor: current.trim() ? "pointer" : "not-allowed",
+                marginLeft: step > 0 ? 12 : 0,
+              }}
             >
-              {loading ? "Envoi..." : step < STEPS.length - 1 ? "Suivant →" : "Envoyer le rapport ✓"}
+              {loading ? "Envoi..." : step < STEPS.length - 1 ? "Continuer" : "Envoyer le rapport"}
             </button>
-            <p style={styles.hint}>Appuie sur Entrée pour continuer</p>
           </div>
 
-          {step > 0 && (
-            <div style={styles.previousAnswers}>
-              {STEPS.slice(0, step).map(s => (
-                <div key={s.id} style={styles.prevItem}>
-                  <span style={{ color: s.color }}>{s.emoji}</span>
-                  <span style={styles.prevLabel}>{s.label} :</span>
-                  <span style={styles.prevValue}>{answers[s.id]}</span>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Date */}
+          <p style={styles.date}>{new Date().toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+
         </div>
       </div>
     </>
@@ -129,24 +262,194 @@ export default function Home() {
 }
 
 const styles = {
-  container: { minHeight: "100vh", background: "#faf9f7", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px", fontFamily: "'DM Sans', sans-serif" },
-  card: { background: "#ffffff", borderRadius: 20, padding: "40px 36px", width: "100%", maxWidth: 560, boxShadow: "0 4px 24px rgba(0,0,0,0.08)" },
-  header: { marginBottom: 24 },
-  badge: { background: "#f3f4f6", color: "#6b7280", fontSize: 12, padding: "4px 12px", borderRadius: 20, fontWeight: 500 },
-  title: { fontFamily: "'DM Serif Display', serif", fontSize: 30, color: "#111827", margin: "12px 0 0" },
-  subtitle: { color: "#6b7280", fontSize: 15, marginTop: 8, lineHeight: 1.6 },
-  progressBar: { height: 6, background: "#f3f4f6", borderRadius: 99, overflow: "hidden", marginBottom: 8 },
-  progressFill: { height: "100%", borderRadius: 99, transition: "width 0.4s ease, background 0.3s ease" },
-  progressText: { color: "#9ca3af", fontSize: 12, textAlign: "right", margin: "0 0 28px" },
-  stepContainer: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-  stepEmoji: { fontSize: 32, width: 60, height: 60, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 14, marginBottom: 12 },
-  stepLabel: { fontSize: 18, fontWeight: 600, margin: "0 0 16px" },
-  textarea: { width: "100%", padding: "14px 16px", border: "2px solid #e5e7eb", borderRadius: 12, fontSize: 15, fontFamily: "'DM Sans', sans-serif", resize: "vertical", outline: "none", color: "#111827", lineHeight: 1.6, boxSizing: "border-box" },
-  button: { marginTop: 16, padding: "14px 28px", border: "none", borderRadius: 12, color: "#fff", fontSize: 15, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", width: "100%" },
-  hint: { color: "#9ca3af", fontSize: 12, marginTop: 8, textAlign: "center" },
-  error: { color: "#ef4444", fontSize: 13, marginTop: 8 },
-  previousAnswers: { marginTop: 28, borderTop: "1px solid #f3f4f6", paddingTop: 20, display: "flex", flexDirection: "column", gap: 8 },
-  prevItem: { display: "flex", gap: 8, fontSize: 13, alignItems: "flex-start" },
-  prevLabel: { color: "#6b7280", fontWeight: 500, whiteSpace: "nowrap" },
-  prevValue: { color: "#374151" },
+  container: {
+    minHeight: "100vh",
+    background: "#F5F2ED",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "24px 16px",
+    fontFamily: "'Inter', sans-serif",
+  },
+  card: {
+    background: "#fff",
+    borderRadius: 16,
+    padding: "48px 44px",
+    width: "100%",
+    maxWidth: 580,
+    boxShadow: "0 2px 20px rgba(0,0,0,0.06)",
+  },
+  progressWrap: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 40,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 3,
+    background: "rgba(0,0,0,0.08)",
+    borderRadius: 99,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    background: "#6B1A2A",
+    borderRadius: 99,
+    transition: "width 0.4s ease",
+  },
+  progressLabel: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: 500,
+    whiteSpace: "nowrap",
+  },
+  questionWrap: {
+    marginBottom: 28,
+  },
+  stepNum: {
+    fontSize: 12,
+    color: "#6B1A2A",
+    fontWeight: 600,
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+    margin: "0 0 10px",
+  },
+  question: {
+    fontSize: 22,
+    fontWeight: 600,
+    color: "#1A1A1A",
+    margin: 0,
+    lineHeight: 1.4,
+  },
+  input: {
+    width: "100%",
+    padding: "14px 16px",
+    border: "1.5px solid rgba(0,0,0,0.1)",
+    borderRadius: 10,
+    fontSize: 16,
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: 400,
+    color: "#1A1A1A",
+    background: "#FAFAF9",
+    outline: "none",
+    boxSizing: "border-box",
+    transition: "border-color 0.2s",
+  },
+  textarea: {
+    width: "100%",
+    padding: "14px 16px",
+    border: "1.5px solid rgba(0,0,0,0.1)",
+    borderRadius: 10,
+    fontSize: 16,
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: 400,
+    color: "#1A1A1A",
+    background: "#FAFAF9",
+    outline: "none",
+    resize: "vertical",
+    lineHeight: 1.6,
+    boxSizing: "border-box",
+    marginTop: 0,
+  },
+  subWrap: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTop: "1px solid rgba(0,0,0,0.06)",
+  },
+  subLabel: {
+    fontSize: 14,
+    fontWeight: 500,
+    color: "#666",
+    margin: "0 0 10px",
+  },
+  suggestions: {
+    position: "absolute",
+    top: "calc(100% + 4px)",
+    left: 0,
+    right: 0,
+    background: "#fff",
+    border: "1.5px solid rgba(0,0,0,0.1)",
+    borderRadius: 10,
+    zIndex: 100,
+    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+    overflow: "hidden",
+  },
+  suggestion: {
+    padding: "12px 16px",
+    fontSize: 15,
+    color: "#1A1A1A",
+    cursor: "pointer",
+    transition: "background 0.15s",
+  },
+  actions: {
+    display: "flex",
+    marginTop: 28,
+  },
+  backBtn: {
+    padding: "13px 20px",
+    border: "1.5px solid rgba(0,0,0,0.12)",
+    borderRadius: 10,
+    fontSize: 15,
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: 500,
+    color: "#666",
+    background: "transparent",
+    cursor: "pointer",
+  },
+  nextBtn: {
+    flex: 1,
+    padding: "13px 24px",
+    border: "none",
+    borderRadius: 10,
+    fontSize: 15,
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: 600,
+    color: "#fff",
+    background: "#6B1A2A",
+    transition: "opacity 0.2s",
+  },
+  error: {
+    color: "#ef4444",
+    fontSize: 13,
+    marginTop: 10,
+  },
+  date: {
+    marginTop: 24,
+    fontSize: 13,
+    color: "#999",
+    textAlign: "center",
+  },
+  successCard: {
+    background: "#fff",
+    borderRadius: 16,
+    padding: "64px 44px",
+    width: "100%",
+    maxWidth: 480,
+    textAlign: "center",
+    boxShadow: "0 2px 20px rgba(0,0,0,0.06)",
+  },
+  successIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: "50%",
+    background: "#6B1A2A",
+    color: "#fff",
+    fontSize: 24,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "0 auto 20px",
+  },
+  successTitle: {
+    fontSize: 22,
+    fontWeight: 600,
+    color: "#1A1A1A",
+    margin: "0 0 10px",
+  },
+  successText: {
+    fontSize: 15,
+    color: "#666",
+    margin: 0,
+  },
 };
