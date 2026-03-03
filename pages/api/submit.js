@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       VALUES (${nom}, ${work}, ${good}, ${bad}, ${learned}, ${tomorrow})
     `;
 
-    // 2. Ouvre le canal DM avec le boss
+    // 2.canal DM avec le boss
     const BOSS_SLACK_ID = "U0AHW68A4R3";
     const DASHBOARD_URL = "https://daily-report-lemon.vercel.app/dashboard";
     const message = `📥 *${nom}* vient de soumettre son rapport !\n\n📋 ${work}\n\n🔗 ${DASHBOARD_URL}`;
