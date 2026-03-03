@@ -17,9 +17,25 @@ export default async function handler(req, res) {
     `;
 
     // Notification Slack au boss
-    const BOSS_SLACK_ID = "D0AHSUTK49Z";
+    const BOSS_SLACK_ID = "U0AHW68A4R3";
     const DASHBOARD_URL = "https://daily-report-lemon.vercel.app/dashboard";
     const message = `📥 *${nom}* vient de soumettre son rapport !\n\n📋 ${work}\n\n🔗 ${DASHBOARD_URL}`;
+
+    // Juste avant le fetch Slack
+console.log("Envoi Slack à:", BOSS_SLACK_ID);
+console.log("Token présent:", !!process.env.SLACK_TOKEN);
+
+const slackRes = await fetch("https://slack.com/api/chat.postMessage", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${process.env.SLACK_TOKEN}`
+  },
+  body: JSON.stringify({ channel: BOSS_SLACK_ID, text: message, mrkdwn: true })
+});
+
+const slackData = await slackRes.json();
+console.log("Slack response:", JSON.stringify(slackData));
 
     await fetch("https://slack.com/api/chat.postMessage", {
       method: "POST",
