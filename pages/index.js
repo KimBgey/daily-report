@@ -2,7 +2,7 @@ import { useState } from "react";
 import Head from "next/head";
 
 const STEPS = [
-  { id: "nom",      emoji: "👤", label: "Ton nom complet",            placeholder: "Ex: André Kim GBAGUIDI",                 color: "#8b5cf6" },
+  { id: "nom",      emoji: "", label: "Ton nom complet",            placeholder: "Ex: André Kim GBAGUIDI",                 color: "#8b5cf6" },
   { id: "work",     emoji: "📋", label: "Travail du jour",            placeholder: "Sur quoi as-tu travaillé aujourd'hui ?", color: "#6366f1" },
   { id: "good",     emoji: "✅", label: "Ce qui s'est bien passé",    placeholder: "Qu'est-ce qui s'est bien passé ?",        color: "#10b981" },
   { id: "bad",      emoji: "❌", label: "Ce qui s'est mal passé",     placeholder: "Qu'est-ce qui n'a pas bien marché ?",     color: "#ef4444" },
