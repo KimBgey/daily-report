@@ -10,41 +10,41 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 1. Sauvegarde dans Neon
     const sql = neon(process.env.DATABASE_URL);
     await sql`
       INSERT INTO rapports (nom, work, good, bad, learned, tomorrow)
       VALUES (${nom}, ${work}, ${good}, ${bad}, ${learned}, ${tomorrow})
     `;
 
-    // Notification Slack au boss
+    // 2. Ouvre le canal DM avec le boss
     const BOSS_SLACK_ID = "U0AHW68A4R3";
     const DASHBOARD_URL = "https://daily-report-lemon.vercel.app/dashboard";
     const message = `📥 *${nom}* vient de soumettre son rapport !\n\n📋 ${work}\n\n🔗 ${DASHBOARD_URL}`;
 
-    // Juste avant le fetch Slack
-console.log("Envoi Slack à:", BOSS_SLACK_ID);
-console.log("Token présent:", !!process.env.SLACK_TOKEN);
-
-const slackRes = await fetch("https://slack.com/api/chat.postMessage", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${process.env.SLACK_TOKEN}`
-  },
-  body: JSON.stringify({ channel: BOSS_SLACK_ID, text: message, mrkdwn: true })
-});
-
-const slackData = await slackRes.json();
-console.log("Slack response:", JSON.stringify(slackData));
-
-    await fetch("https://slack.com/api/chat.postMessage", {
+    const openRes = await fetch("https://slack.com/api/conversations.open", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.SLACK_TOKEN}`
       },
-      body: JSON.stringify({ channel: BOSS_SLACK_ID, text: message, mrkdwn: true })
+      body: JSON.stringify({ users: BOSS_SLACK_ID })
     });
+    const openData = await openRes.json();
+    console.log("Open DM:", JSON.stringify(openData));
+
+    if (openData.ok) {
+      const slackRes = await fetch("https://slack.com/api/chat.postMessage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.SLACK_TOKEN}`
+        },
+        body: JSON.stringify({ channel: openData.channel.id, text: message, mrkdwn: true })
+      });
+      const slackData = await slackRes.json();
+      console.log("Slack response:", JSON.stringify(slackData));
+    }
 
     return res.status(200).json({ success: true });
   } catch (e) {
