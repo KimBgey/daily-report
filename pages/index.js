@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Head from "next/head";
 
 const STEPS = [
+  { id: "nom",      emoji: "👤", label: "Ton nom complet",            placeholder: "Ex: André Kim GBAGUIDI",                 color: "#8b5cf6" },
   { id: "work",     emoji: "📋", label: "Travail du jour",            placeholder: "Sur quoi as-tu travaillé aujourd'hui ?", color: "#6366f1" },
   { id: "good",     emoji: "✅", label: "Ce qui s'est bien passé",    placeholder: "Qu'est-ce qui s'est bien passé ?",        color: "#10b981" },
   { id: "bad",      emoji: "❌", label: "Ce qui s'est mal passé",     placeholder: "Qu'est-ce qui n'a pas bien marché ?",     color: "#ef4444" },
@@ -16,13 +17,6 @@ export default function Home() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [userId, setUserId] = useState("");
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const u = params.get("user");
-    if (u) setUserId(u);
-  }, []);
 
   const currentStep = STEPS[step];
   const progress = (step / STEPS.length) * 100;
@@ -42,13 +36,11 @@ export default function Home() {
   async function handleSubmit(finalAnswers) {
     setLoading(true);
     setError("");
-    const params = new URLSearchParams(window.location.search);
-    const currentUserId = params.get("user") || userId;
     try {
       const res = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUserId, ...finalAnswers }),
+        body: JSON.stringify(finalAnswers),
       });
       const data = await res.json();
       if (data.success) setSubmitted(true);
@@ -106,7 +98,7 @@ export default function Home() {
               onKeyDown={handleKeyDown}
               placeholder={currentStep.placeholder}
               style={styles.textarea}
-              rows={4}
+              rows={currentStep.id === "nom" ? 1 : 4}
             />
             {error && <p style={styles.error}>{error}</p>}
             <button
