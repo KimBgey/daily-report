@@ -1,6 +1,7 @@
 import { neon } from "@neondatabase/serverless";
 
 export default async function handler(req, res) {
+    console.log("Submit appelé, body:", JSON.stringify(req.body));
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   const { nom, built, working, validated, notWorking, toLearn, learned, tomorrow } = req.body;
