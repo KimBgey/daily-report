@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Africa Samurai — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --brand:       #6B1A2A;
+    --brand-soft:  rgba(107,26,42,0.07);
+    --brand-mid:   rgba(107,26,42,0.15);
+    --bg:          #F5F2ED;
+    --card:        #FFFFFF;
+    --sidebar-bg:  #1A0A0E;
+    --text:        #1A1A1A;
+    --muted:       #888;
+    --border:      rgba(0,0,0,0.07);
+    --success:     #2D7A4F;
+    --warning:     #B7791F;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 220px; min-width: 220px;
+    background: var(--sidebar-bg);
+    display: flex; flex-direction: column;
+    padding: 28px 0;
+  }
+
+  .sidebar-logo {
+    padding: 0 24px 28px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 20px;
+  }
+
+  .sidebar-logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.1rem;
+    color: white;
+    letter-spacing: 0.02em;
+  }
+
+  .sidebar-logo-sub {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .sidebar-label {
+    font-size: 0.6rem; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.25);
+    padding: 0 24px; margin-bottom: 6px;
+  }
+
+  .sidebar-section { padding: 0 12px; margin-bottom: 20px; }
+
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    cursor: pointer; color: rgba(255,255,255,0.45);
+    font-size: 0.85rem; font-weight: 400;
+    transition: all 0.2s; margin-bottom: 2px;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
+
+  .nav-item.active {
+    background: var(--brand); color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 14px rgba(107,26,42,0.4);
+  }
+
+  .nav-icon { font-size: 1rem; width: 18px; text-align: center; }
+
+  .sidebar-footer {
+    margin-top: auto; padding: 16px 12px 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .user-chip {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+  }
+
+  .user-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 700; color: white; flex-shrink: 0;
+  }
+
+  .user-name { font-size: 0.78rem; color: rgba(255,255,255,0.7); font-weight: 500; }
+  .user-role { font-size: 0.65rem; color: rgba(255,255,255,0.3); }
+
+  /* ── Main ── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  .header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .header-title { font-family: 'DM Serif Display', serif; font-size: 1.35rem; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+
+  .header-date {
+    font-size: 0.75rem; color: var(--muted);
+    background: var(--bg); padding: 6px 14px;
+    border-radius: 20px; border: 1px solid var(--border);
+  }
+
+  .notif-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--bg); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1rem; position: relative;
+  }
+
+  .notif-dot {
+    position: absolute; top: 6px; right: 6px;
+    width: 8px; height: 8px;
+    background: var(--brand); border-radius: 50%; border: 2px solid white;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex; flex-shrink: 0;
+  }
+
+  .tab {
+    padding: 14px 20px; font-size: 0.85rem; font-weight: 500;
+    color: var(--muted); cursor: pointer;
+    border-bottom: 2px solid transparent; transition: all 0.2s;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--brand); border-bottom-color: var(--brand); font-weight: 600; }
+
+  /* ── Content ── */
+  .content { flex: 1; overflow-y: auto; padding: 28px 32px; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeUp 0.3s ease; }
+
+  /* ── KPI ── */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px; margin-bottom: 24px;
+  }
+
+  .kpi-card {
+    background: var(--card); border-radius: 16px;
+    padding: 20px; border: 1px solid var(--border);
+    position: relative; overflow: hidden;
+  }
+
+  .kpi-card.accent { background: var(--brand); border-color: var(--brand); }
+  .kpi-card.accent .kpi-label { color: rgba(255,255,255,0.7); }
+  .kpi-card.accent .kpi-value { color: white; }
+  .kpi-card.accent .kpi-delta { color: rgba(255,255,255,0.65); }
+  .kpi-card.accent .kpi-icon { color: white; }
+
+  .kpi-label {
+    font-size: 0.68rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted); margin-bottom: 10px;
+  }
+
+  .kpi-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.2rem; color: var(--text); line-height: 1; margin-bottom: 8px;
+  }
+
+  .kpi-delta { font-size: 0.73rem; color: var(--success); font-weight: 500; }
+  .kpi-delta.warn { color: var(--brand); }
+  .kpi-icon { position: absolute; top: 16px; right: 16px; font-size: 1.5rem; opacity: 0.12; }
+
+  /* ── Bottom grid ── */
+  .bottom-grid { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+  .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── Section card ── */
+  .section-card {
+    background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border); overflow: hidden;
+  }
+
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+  }
+
+  .section-title { font-size: 0.85rem; font-weight: 600; }
+
+  .section-action {
+    font-size: 0.72rem; color: var(--brand); font-weight: 500;
+    cursor: pointer; background: var(--brand-soft);
+    padding: 4px 10px; border-radius: 20px;
+  }
+
+  /* ── Table base ── */
+  .data-table { width: 100%; border-collapse: collapse; }
+
+  .data-table th {
+    font-size: 0.63rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted); padding: 10px 20px;
+    text-align: left; background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table td {
+    padding: 13px 20px; font-size: 0.82rem;
+    border-bottom: 1px solid rgba(0,0,0,0.04);
+    vertical-align: middle;
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: rgba(107,26,42,0.02); }
+
+  /* ── Avatar / member ── */
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--brand-soft); border: 1.5px solid var(--brand-mid);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.68rem; font-weight: 700; color: var(--brand); flex-shrink: 0;
+  }
+
+  .member-cell { display: flex; align-items: center; gap: 10px; }
+  .member-name { font-weight: 500; }
+  .member-sub { font-size: 0.7rem; color: var(--muted); }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 0.67rem; font-weight: 600; white-space: nowrap;
+  }
+
+  .badge-done   { background: rgba(45,122,79,0.1);   color: #2D7A4F; }
+  .badge-late   { background: rgba(107,26,42,0.08);  color: var(--brand); }
+  .badge-dev    { background: rgba(59,130,246,0.1);  color: #3b82f6; }
+  .badge-design { background: rgba(168,85,247,0.1);  color: #a855f7; }
+  .badge-ceo    { background: rgba(245,158,11,0.1);  color: #f59e0b; }
+  .badge-mkt    { background: rgba(16,185,129,0.1);  color: #10b981; }
+
+  .preview-text {
+    font-size: 0.77rem; color: var(--muted);
+    max-width: 200px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* ── Ring ── */
+  .ring-wrap {
+    display: flex; flex-direction: column;
+    align-items: center; padding: 20px 20px 16px;
+  }
+
+  .ring-svg { width: 110px; height: 110px; margin-bottom: 10px; }
+  .ring-center { font-family: 'DM Serif Display', serif; font-size: 1.5rem; fill: var(--text); }
+  .ring-sub { font-size: 0.63rem; fill: var(--muted); }
+
+  /* ── Roles ── */
+  .roles-list { padding: 16px 20px; }
+
+  .role-row { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+  .role-row:last-child { margin-bottom: 0; }
+  .role-name { font-size: 0.78rem; font-weight: 500; min-width: 110px; }
+  .role-bar-track { flex: 1; height: 6px; background: var(--bg); border-radius: 99px; overflow: hidden; }
+  .role-bar-fill { height: 100%; border-radius: 99px; background: var(--brand); }
+  .role-count { font-size: 0.73rem; font-weight: 600; color: var(--muted); min-width: 20px; text-align: right; }
+
+  /* ── Filters bar ── */
+  .filters-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .filter-input {
+    flex: 1; min-width: 180px; padding: 8px 14px;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    background: var(--bg); font-size: 0.82rem;
+    font-family: 'DM Sans', sans-serif; color: var(--text); outline: none;
+  }
+
+  .filter-input:focus { border-color: var(--brand); background: white; }
+
+  .filter-select {
+    padding: 8px 12px; border: 1.5px solid var(--border);
+    border-radius: 10px; background: var(--bg);
+    font-size: 0.82rem; font-family: 'DM Sans', sans-serif;
+    color: var(--text); outline: none; cursor: pointer;
+  }
+
+  .filter-select:focus { border-color: var(--brand); }
+
+  .btn-primary {
+    padding: 8px 16px; background: var(--brand); color: white;
+    border: none; border-radius: 10px; font-size: 0.82rem;
+    font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s; white-space: nowrap;
+  }
+
+  .btn-primary:hover { background: #7d1f31; transform: translateY(-1px); }
+
+  .btn-ghost {
+    padding: 8px 14px; background: transparent; color: var(--muted);
+    border: 1.5px solid var(--border); border-radius: 10px;
+    font-size: 0.82rem; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s; white-space: nowrap;
+  }
+
+  .btn-ghost:hover { background: var(--bg); color: var(--text); }
+
+  /* ── CRUD actions ── */
+  .action-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 0.8rem; transition: all 0.15s;
+  }
+
+  .action-btn:hover { background: var(--brand-soft); border-color: var(--brand-mid); }
+  .action-btn.del:hover { background: rgba(229,62,62,0.08); border-color: rgba(229,62,62,0.2); }
+
+  /* ── Rapport detail drawer hint ── */
+  .expand-hint {
+    font-size: 0.7rem; color: var(--brand); cursor: pointer;
+    background: var(--brand-soft); padding: 2px 8px; border-radius: 6px;
+  }
+
+  /* ── Pagination ── */
+  .pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; border-top: 1px solid var(--border);
+    font-size: 0.75rem; color: var(--muted);
+  }
+
+  .page-btns { display: flex; gap: 4px; }
+
+  .page-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 0.78rem; font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .page-btn.active { background: var(--brand); color: white; border-color: var(--brand); }
+  .page-btn:hover:not(.active) { background: var(--brand-soft); }
+
+  /* ── Empty state ── */
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 0.85rem; }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-thumb { background: var(--brand-mid); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-text">Africa Samurai</div>
+    <div class="sidebar-logo-sub">Boss Dashboard</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Principal</div>
+    <div class="nav-item active" onclick="switchNav(this,'apercu')"><span class="nav-icon">⊞</span> Vue générale</div>
+    <div class="nav-item" onclick="switchNav(this,'rapports')"><span class="nav-icon">📋</span> Rapports</div>
+    <div class="nav-item" onclick="switchNav(this,'equipe')"><span class="nav-icon">👥</span> Équipe</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Autre</div>
+    <div class="nav-item"><span class="nav-icon">⚙️</span> Paramètres</div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="user-avatar">IB</div>
+      <div>
+        <div class="user-name">Irotori BAROKA</div>
+        <div class="user-role">CEO · Admin</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="header">
+    <div class="header-title" id="page-title">Vue générale</div>
+    <div class="header-right">
+      <div class="header-date">📅 Jeudi 5 mars 2026</div>
+      <div class="notif-btn">🔔<span class="notif-dot"></span></div>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this,'apercu')">Aperçu</div>
+    <div class="tab" onclick="switchTab(this,'rapports')">Rapports</div>
+    <div class="tab" onclick="switchTab(this,'equipe')">Équipe</div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══════════ APERÇU ══════════ -->
+    <div class="tab-panel active" id="panel-apercu">
+
+      <div class="kpi-grid">
+        <div class="kpi-card accent">
+          <div class="kpi-label">Rapports aujourd'hui</div>
+          <div class="kpi-value">4</div>
+          <div class="kpi-delta">sur 5 membres</div>
+          <div class="kpi-icon">📋</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Membres actifs</div>
+          <div class="kpi-value">5</div>
+          <div class="kpi-delta">↑ +1 cette semaine</div>
+          <div class="kpi-icon">👥</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Taux de complétion</div>
+          <div class="kpi-value">80<span style="font-size:1rem">%</span></div>
+          <div class="kpi-delta">↑ vs hier 60%</div>
+          <div class="kpi-icon">✅</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Rapport manquant</div>
+          <div class="kpi-value">1</div>
+          <div class="kpi-delta warn">⚠ En attente</div>
+          <div class="kpi-icon">⏳</div>
+        </div>
+      </div>
+
+      <div class="bottom-grid">
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-title">Derniers rapports reçus</div>
+            <div class="section-action" onclick="switchTab(document.querySelectorAll('.tab')[1],'rapports')">Voir tout →</div>
+          </div>
+          <table class="data-table">
+            <thead><tr>
+              <th>Membre</th><th>Rôle</th><th>Construit aujourd'hui</th><th>Heure</th><th>Statut</th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td><div class="member-cell"><div class="avatar">IB</div><div><div class="member-name">Irotori BAROKA</div></div></div></td>
+                <td><span class="badge badge-ceo">CEO</span></td>
+                <td><div class="preview-text">Revue stratégique Q1, réunion investisseurs...</div></td>
+                <td style="color:var(--muted);font-size:0.75rem">09:12</td>
+                <td><span class="badge badge-done">✓ Envoyé</span></td>
+              </tr>
+              <tr>
+                <td><div class="member-cell"><div class="avatar">DJ</div><div><div class="member-name">Djoni OUEDANOU</div></div></div></td>
+                <td><span class="badge badge-dev">Dev</span></td>
+                <td><div class="preview-text">Intégration API Neon, fix auth token...</div></td>
+                <td style="color:var(--muted);font-size:0.75rem">10:34</td>
+                <td><span class="badge badge-done">✓ Envoyé</span></td>
+              </tr>
+              <tr>
+                <td><div class="member-cell"><div class="avatar">AK</div><div><div class="member-name">André kim GBAGUIDI</div></div></div></td>
+                <td><span class="badge badge-dev">Dev</span></td>
+                <td><div class="preview-text">Dashboard filtres, composant DataTable...</div></td>
+                <td style="color:var(--muted);font-size:0.75rem">11:05</td>
+                <td><span class="badge badge-done">✓ Envoyé</span></td>
+              </tr>
+              <tr>
+                <td><div class="member-cell"><div class="avatar">DS</div><div><div class="member-name">David SESSOU</div></div></div></td>
+                <td><span class="badge badge-dev">Dev</span></td>
+                <td><div class="preview-text">Notifications Slack, tests unitaires...</div></td>
+                <td style="color:var(--muted);font-size:0.75rem">14:22</td>
+                <td><span class="badge badge-done">✓ Envoyé</span></td>
+              </tr>
+              <tr>
+                <td><div class="member-cell"><div class="avatar">GF</div><div><div class="member-name">GBENOU Fidèle</div></div></div></td>
+                <td><span class="badge badge-dev">Dev</span></td>
+                <td><div class="preview-text">—</div></td>
+                <td style="color:var(--muted);font-size:0.75rem">—</td>
+                <td><span class="badge badge-late">⏳ En attente</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="right-col">
+          <div class="section-card">
+            <div class="section-head"><div class="section-title">Complétion du jour</div></div>
+            <div class="ring-wrap">
+              <svg class="ring-svg" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="48" fill="none" stroke="#F5F2ED" stroke-width="10"/>
+                <circle cx="60" cy="60" r="48" fill="none" stroke="#6B1A2A" stroke-width="10"
+                  stroke-dasharray="301.6" stroke-dashoffset="60.3"
+                  stroke-linecap="round" transform="rotate(-90 60 60)"/>
+                <text x="60" y="55" text-anchor="middle" class="ring-center">80%</text>
+                <text x="60" y="70" text-anchor="middle" class="ring-sub">4 / 5 membres</text>
+              </svg>
+              <div style="font-size:0.75rem;color:var(--muted);text-align:center;line-height:1.5">
+                4 rapports reçus<br/>1 membre n'a pas encore soumis
+              </div>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="section-head"><div class="section-title">Membres par rôle</div></div>
+            <div class="roles-list">
+              <div class="role-row">
+                <div class="role-name">Développeur·se</div>
+                <div class="role-bar-track"><div class="role-bar-fill" style="width:80%"></div></div>
+                <div class="role-count">4</div>
+              </div>
+              <div class="role-row">
+                <div class="role-name">CEO</div>
+                <div class="role-bar-track"><div class="role-bar-fill" style="width:20%;background:#a0344a"></div></div>
+                <div class="role-count">1</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ RAPPORTS ══════════ -->
+    <div class="tab-panel" id="panel-rapports">
+
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="kpi-card accent">
+          <div class="kpi-label">Total rapports</div>
+          <div class="kpi-value">24</div>
+          <div class="kpi-delta">cette semaine</div>
+          <div class="kpi-icon">📋</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Aujourd'hui</div>
+          <div class="kpi-value">4</div>
+          <div class="kpi-delta">sur 5 attendus</div>
+          <div class="kpi-icon">📅</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Manquants cette semaine</div>
+          <div class="kpi-value">3</div>
+          <div class="kpi-delta warn">⚠ À relancer</div>
+          <div class="kpi-icon">⚠️</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="filters-bar">
+          <input class="filter-input" placeholder="🔍  Rechercher un membre..." />
+          <select class="filter-select">
+            <option>Tous les rôles</option>
+            <option>Développeur·se</option>
+            <option>Designer</option>
+            <option>CEO</option>
+            <option>Marketing</option>
+          </select>
+          <select class="filter-select">
+            <option>Toutes les dates</option>
+            <option>Aujourd'hui</option>
+            <option>Cette semaine</option>
+            <option>Ce mois</option>
+          </select>
+          <select class="filter-select">
+            <option>Tous les statuts</option>
+            <option>Envoyé</option>
+            <option>En attente</option>
+          </select>
+          <button class="btn-ghost">↓ Exporter</button>
+        </div>
+
+        <table class="data-table">
+          <thead><tr>
+            <th>Membre</th><th>Rôle</th><th>Construit</th><th>Bloqué sur</th><th>Date</th><th>Statut</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td><div class="member-cell"><div class="avatar">IB</div><div><div class="member-name">Irotori BAROKA</div><div class="member-sub">CEO</div></div></div></td>
+              <td><span class="badge badge-ceo">CEO</span></td>
+              <td><div class="preview-text">Revue stratégique Q1, réunion investisseurs</div></td>
+              <td><div class="preview-text">Aucun blocage signalé</div></td>
+              <td style="font-size:0.75rem;color:var(--muted)">05 mars 2026</td>
+              <td><span class="badge badge-done">✓ Envoyé</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <div class="action-btn" title="Voir le rapport">👁</div>
+                  <div class="action-btn del" title="Supprimer">🗑</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="member-cell"><div class="avatar">DJ</div><div><div class="member-name">Djoni OUEDANOU</div><div class="member-sub">Developer</div></div></div></td>
+              <td><span class="badge badge-dev">Dev</span></td>
+              <td><div class="preview-text">Intégration API Neon, fix auth token</div></td>
+              <td><div class="preview-text">Déploiement vercel env vars</div></td>
+              <td style="font-size:0.75rem;color:var(--muted)">05 mars 2026</td>
+              <td><span class="badge badge-done">✓ Envoyé</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <div class="action-btn">👁</div>
+                  <div class="action-btn del">🗑</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="member-cell"><div class="avatar">AK</div><div><div class="member-name">André kim GBAGUIDI</div><div class="member-sub">Developer</div></div></div></td>
+              <td><span class="badge badge-dev">Dev</span></td>
+              <td><div class="preview-text">Dashboard filtres, composant DataTable</div></td>
+              <td><div class="preview-text">Pagination côté serveur</div></td>
+              <td style="font-size:0.75rem;color:var(--muted)">05 mars 2026</td>
+              <td><span class="badge badge-done">✓ Envoyé</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <div class="action-btn">👁</div>
+                  <div class="action-btn del">🗑</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="member-cell"><div class="avatar">DS</div><div><div class="member-name">David SESSOU</div><div class="member-sub">Developer</div></div></div></td>
+              <td><span class="badge badge-dev">Dev</span></td>
+              <td><div class="preview-text">Notifications Slack, tests unitaires</div></td>
+              <td><div class="preview-text">Config webhook Slack prod</div></td>
+              <td style="font-size:0.75rem;color:var(--muted)">05 mars 2026</td>
+              <td><span class="badge badge-done">✓ Envoyé</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <div class="action-btn">👁</div>
+                  <div class="action-btn del">🗑</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="member-cell"><div class="avatar">GF</div><div><div class="member-name">GBENOU Fidèle</div><div class="member-sub">Developer</div></div></div></td>
+              <td><span class="badge badge-dev">Dev</span></td>
+              <td><div style="color:var(--muted);font-size:0.78rem;">Pas encore soumis</div></td>
+              <td>—</td>
+              <td style="font-size:0.75rem;color:var(--muted)">05 mars 2026</td>
+              <td><span class="badge badge-late">⏳ En attente</span></td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <div class="action-btn" title="Relancer">📩</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pagination">
+          <span>Affichage 1–5 sur 24 rapports</span>
+          <div class="page-btns">
+            <div class="page-btn">‹</div>
+            <div class="page-btn active">1</div>
+            <div class="page-btn">2</div>
+            <div class="page-btn">3</div>
+            <div class="page-btn">›</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ ÉQUIPE ══════════ -->
+    <div class="tab-panel" id="panel-equipe">
+
+      <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="kpi-card accent">
+          <div class="kpi-label">Total membres</div>
+          <div class="kpi-value">5</div>
+          <div class="kpi-delta">équipe actuelle</div>
+          <div class="kpi-icon">👥</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Développeurs</div>
+          <div class="kpi-value">4</div>
+          <div class="kpi-delta">80% de l'équipe</div>
+          <div class="kpi-icon">💻</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Inscrits ce mois</div>
+          <div class="kpi-value">5</div>
+          <div class="kpi-delta">↑ Tous nouveaux</div>
+          <div class="kpi-icon">🆕</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="filters-bar">
+          <input class="filter-input" placeholder="🔍  Rechercher un membre..." />
+          <select class="filter-select">
+            <option>Tous les rôles</option>
+            <option>Développeur·se</option>
+            <option>Designer</option>
+            <option>CEO</option>
+            <option>Marketing</option>
+          </select>
+          <button class="btn-primary">+ Ajouter un membre</button>
+        </div>
+
+        <table class="data-table">
+          <thead><tr>
+            <th>Membre</th><th>Rôle</th><th>Email</th><th>Téléphone</th><th>Âge</th><th>Inscrit le</th><th>Actions</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td><div class="member-cell"><div class="avatar">IB</div><div><div class="member-name">Irotori BAROKA</div></div></div></td>
+              <td><span class="badge badge-ceo">CEO</span></td>
+              <td style="font-size:0.78rem;color:var(--muted)">birotori@gmail.com</td>
+              <td style="font-size:0.78rem;color:var(--muted)">+229 67 15 39 74</td>
+              <td style="font-size:0.78rem">—</td>
+              <td style="font-size:0.75rem;color:var(--muted)">04 mars 2026</td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <div class="action-btn" title="Voir">👁</div>
+                  <div class="action-btn" title="Modifier">✏️</div>
+                  <div class="action-btn del" title="Supprimer">🗑</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="member-cell"><div class="avatar">DJ</div><div><div class="member-name">Djoni OUEDANOU</div></div></div></td>
+              <td><span class="badge badge-dev">Dev</span></td>
+              <td style="font-size:0.78rem;color:var(--muted)">luciejerom@email.com</td>
+              <td style="font-size:0.78rem;color:var(--muted)">+229 55 95 25 89</td>
+              <td style="font-size:0.78rem">23</td>
+              <td style="font-size:0.75rem;color:var(--muted)">04 mars 2026</td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <div class="action-btn">👁</div>
+                  <div class="action-btn">✏️</div>
+                  <div class="action-btn del">🗑</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="member-cell"><div class="avatar">AK</div><div><div class="member-name">André kim GBAGUIDI</div></div></div></td>
+              <td><span class="badge badge-dev">Dev</span></td>
+              <td style="font-size:0.78rem;color:var(--muted)">andrekimgbaguidi@gmail.com</td>
+              <td style="font-size:0.78rem;color:var(--muted)">+229 66 33 72 19</td>
+              <td style="font-size:0.78rem">22</td>
+              <td style="font-size:0.75rem;color:var(--muted)">04 mars 2026</td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <div class="action-btn">👁</div>
+                  <div class="action-btn">✏️</div>
+                  <div class="action-btn del">🗑</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="member-cell"><div class="avatar">DS</div><div><div class="member-name">David SESSOU</div></div></div></td>
+              <td><span class="badge badge-dev">Dev</span></td>
+              <td style="font-size:0.78rem;color:var(--muted)">aristidesessou324@gmail.com</td>
+              <td style="font-size:0.78rem;color:var(--muted)">+229 60 12 47 90</td>
+              <td style="font-size:0.78rem">23</td>
+              <td style="font-size:0.75rem;color:var(--muted)">04 mars 2026</td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <div class="action-btn">👁</div>
+                  <div class="action-btn">✏️</div>
+                  <div class="action-btn del">🗑</div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><div class="member-cell"><div class="avatar">GF</div><div><div class="member-name">GBENOU Fidèle</div></div></div></td>
+              <td><span class="badge badge-dev">Dev</span></td>
+              <td style="font-size:0.78rem;color:var(--muted)">gbenoufidele236@gmail.com</td>
+              <td style="font-size:0.78rem;color:var(--muted)">+229 43 12 70 34</td>
+              <td style="font-size:0.78rem">24</td>
+              <td style="font-size:0.75rem;color:var(--muted)">04 mars 2026</td>
+              <td>
+                <div style="display:flex;gap:4px">
+                  <div class="action-btn">👁</div>
+                  <div class="action-btn">✏️</div>
+                  <div class="action-btn del">🗑</div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="pagination">
+          <span>5 membres au total</span>
+          <div class="page-btns">
+            <div class="page-btn active">1</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+  const TITLES = { apercu: 'Vue générale', rapports: 'Rapports', equipe: 'Équipe' };
+
+  function switchTab(el, id) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('panel-' + id).classList.add('active');
+    document.getElementById('page-title').textContent = TITLES[id];
+    // sync sidebar
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick')?.includes(id)) n.classList.add('active');
+    });
+  }
+
+  function switchNav(el, id) {
+    const tabIndex = { apercu: 0, rapports: 1, equipe: 2 };
+    const tabs = document.querySelectorAll('.tab');
+    switchTab(tabs[tabIndex[id]], id);
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+  }
+</script>
+
+</body>
+</html>
