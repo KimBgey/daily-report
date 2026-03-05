@@ -86,6 +86,9 @@ export default function Dashboard() {
           <div style={s.header}>
             <div>
               <h1 style={s.title}>Vue d'ensemble</h1>
+<a href="/dashboard-mockup.html">
+  Voir la maquette
+</a>
               <p style={s.subtitle}>{today}</p>
             </div>
             <div style={s.statsRow}>
